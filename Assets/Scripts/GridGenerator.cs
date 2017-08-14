@@ -14,6 +14,11 @@ public class GridGenerator : MonoBehaviour {
     private Vector2 _gridSize;
     private int _tilesetTileResolution = 256;
 
+    public Vector2 GetTileAt(Vector3 point)
+    {
+        return new Vector2(Mathf.Floor(point.x / tileSize.x), Mathf.Floor(point.z / tileSize.y));
+    }
+
 	private void Start () {
         Invalidate();
     }
