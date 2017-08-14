@@ -16,6 +16,7 @@ public class GameController : MonoBehaviour {
             {
                 var localHitPoint = _hitInfo.transform.worldToLocalMatrix.MultiplyPoint3x4(_hitInfo.point);
                 var targetTile = battleGrid.GetTileAt(localHitPoint);
+                battleGrid.HighlightTile(targetTile);
             }
         }
 	}

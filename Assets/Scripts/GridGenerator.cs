@@ -9,14 +9,66 @@ public class GridGenerator : MonoBehaviour {
 
     public TextAsset dataFile;
     public Vector2 tileSize = new Vector2(1, 1);
+    public GameObject hightlightPrefab;
 
     private GridModel _gridData;
     private Vector2 _gridSize;
     private int _tilesetTileResolution = 256;
 
+    private int _hlLength;
+    private bool _isHlVertical;
+    private GameObject _highlighter;
+
     public Vector2 GetTileAt(Vector3 point)
     {
         return new Vector2(Mathf.Floor(point.x / tileSize.x), Mathf.Floor(point.z / tileSize.y));
+    }
+
+    public void SetHighlight(int length) { SetHighlight(length, false); }
+
+    public void SetHighlight(int length, bool isVertical)
+    {
+        _hlLength = length;
+        _isHlVertical = isVertical;
+
+        if (_highlighter) Destroy(_highlighter);
+        _highlighter = new GameObject("Highlighter");
+        _highlighter.transform.parent = transform.parent;
+        _highlighter.transform.localScale = new Vector3(1, 1, 1);
+        _highlighter.transform.localPosition = new Vector3(0, 0, 0);
+
+        if (hightlightPrefab)
+        {
+            for (int i = 0; i < _hlLength; i++)
+            {
+                var instance = Instantiate(hightlightPrefab, new Vector3(), Quaternion.identity, _highlighter.transform);
+                instance.transform.localPosition = _isHlVertical ? new Vector3(0, 0, i * tileSize.y) : new Vector3(i * tileSize.x, 0, 0);
+            }
+        }
+        else
+            Debug.LogError("Highlight object is not provided");
+        
+    }
+
+    public void HighlightTile(Vector2 tile) { HighlightTile((int)tile.y, (int)tile.x); }
+
+    public void HighlightTile(int rowIndex, int colIndex)
+    {
+        if (_highlighter)
+        {
+            float posX = _isHlVertical ? colIndex : colIndex - Mathf.Floor(_hlLength * .5f);
+            float posY = _isHlVertical ? rowIndex - Mathf.Floor(_hlLength * .5f) : rowIndex;
+
+            if (_isHlVertical)
+                posY = Mathf.Min(Mathf.Max(posY, 0), _gridData.Height - _hlLength);
+            else
+                posX = Mathf.Min(Mathf.Max(posX, 0), _gridData.Width - _hlLength);
+
+            posX *= tileSize.x;
+            posY *= tileSize.y;
+
+            _highlighter.transform.localPosition = new Vector3(posX, .01f, posY);
+        }
     }
 
 	private void Start () {
