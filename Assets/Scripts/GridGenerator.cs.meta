@@ -1,10 +1,13 @@
 fileFormatVersion: 2
 guid: 86335799372d78a4a946e765cfd3cb0b
-timeCreated: 1502487665
+timeCreated: 1502788946
 licenseType: Free
 MonoImporter:
   serializedVersion: 2
-  defaultReferences: []
+  defaultReferences:
+  - dataFile: {fileID: 4900000, guid: 7304c435a7889164691422f25873d470, type: 3}
+  - hightlightPrefab: {fileID: 1980863786559392, guid: 1ae0886e904c5844a8b9fe347052717e,
+      type: 2}
   executionOrder: 0
   icon: {instanceID: 0}
   userData: 

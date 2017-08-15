@@ -1,4 +1,5 @@
-﻿using UnityEditor;
+﻿using System;
+using UnityEditor;
 using UnityEngine;
 
 [ExecuteInEditMode]
@@ -15,8 +16,8 @@ public class GridGenerator : MonoBehaviour {
     private Vector2 _gridSize;
     private int _tilesetTileResolution = 256;
 
-    private int _hlLength;
-    private bool _isHlVertical;
+    private int _hlLength = 1;
+    private bool _isHlVertical = false;
     private GameObject _highlighter;
 
     public Vector2 GetTileAt(Vector3 point)
@@ -24,50 +25,42 @@ public class GridGenerator : MonoBehaviour {
         return new Vector2(Mathf.Floor(point.x / tileSize.x), Mathf.Floor(point.z / tileSize.y));
     }
 
-    public void SetHighlight(int length) { SetHighlight(length, false); }
+    public Vector3 GetHighlighterCenter(Vector2 tile)
+    {
+        float hlen = Mathf.Floor(_hlLength * .5f);
+        float odd = _hlLength % 2 == 0 ? 0 : 1;
 
-    public void SetHighlight(int length, bool isVertical)
+        // Apply restrictions to row & col - prevents object going outside grid boundaries
+        float posX = _isHlVertical ? tile.x : Mathf.Min(Mathf.Max(tile.x, hlen), _gridData.Width - hlen - odd);
+        float posY = _isHlVertical ? Mathf.Min(Mathf.Max(tile.y, hlen), _gridData.Height - hlen - odd) : tile.y;
+
+        posX *= tileSize.x;
+        posY *= tileSize.y;
+
+        return new Vector3(posX, 0, posY);
+    }
+
+    public void SetHighlighter(int length, bool isVertical)
     {
         _hlLength = length;
         _isHlVertical = isVertical;
-
-        if (_highlighter) Destroy(_highlighter);
-        _highlighter = new GameObject("Highlighter");
-        _highlighter.transform.parent = transform.parent;
-        _highlighter.transform.localScale = new Vector3(1, 1, 1);
-        _highlighter.transform.localPosition = new Vector3(0, 0, 0);
-
-        if (hightlightPrefab)
-        {
-            for (int i = 0; i < _hlLength; i++)
-            {
-                var instance = Instantiate(hightlightPrefab, new Vector3(), Quaternion.identity, _highlighter.transform);
-                instance.transform.localPosition = _isHlVertical ? new Vector3(0, 0, i * tileSize.y) : new Vector3(i * tileSize.x, 0, 0);
-            }
-        }
-        else
-            Debug.LogError("Highlight object is not provided");
-        
+        if (_highlighter) InstantiateHighlighter(); // refresh highlighter if already displayed
     }
 
-    public void HighlightTile(Vector2 tile) { HighlightTile((int)tile.y, (int)tile.x); }
+    public void HighlightTile(int rowIndex, int colIndex) { HighlightTile(new Vector2(colIndex, rowIndex)); }
 
-    public void HighlightTile(int rowIndex, int colIndex)
+    public void HighlightTile(Vector2 tile)
     {
         if (_highlighter)
         {
-            float posX = _isHlVertical ? colIndex : colIndex - Mathf.Floor(_hlLength * .5f);
-            float posY = _isHlVertical ? rowIndex - Mathf.Floor(_hlLength * .5f) : rowIndex;
+            var highlighterPos = GetHighlighterCenter(tile);
+            float hlen = Mathf.Floor(_hlLength * .5f);
 
-            if (_isHlVertical)
-                posY = Mathf.Min(Mathf.Max(posY, 0), _gridData.Height - _hlLength);
-            else
-                posX = Mathf.Min(Mathf.Max(posX, 0), _gridData.Width - _hlLength);
+            highlighterPos.x -= _isHlVertical ? 0 : hlen * tileSize.x;
+            highlighterPos.y = .01f;
+            highlighterPos.z -= _isHlVertical ? hlen * tileSize.y : 0;
 
-            posX *= tileSize.x;
-            posY *= tileSize.y;
-
-            _highlighter.transform.localPosition = new Vector3(posX, .01f, posY);
+            _highlighter.transform.localPosition = highlighterPos;
         }
     }
 
@@ -162,5 +155,37 @@ public class GridGenerator : MonoBehaviour {
         meshFilter.mesh = mesh;
         meshCollider.sharedMesh = mesh;
         meshRenderer.sharedMaterial = groundMat;
+    }
+
+    private void InstantiateHighlighter()
+    {
+        if (_highlighter) Destroy(_highlighter);
+        if (_hlLength <= 0) return;
+
+        _highlighter = new GameObject("Highlighter");
+        _highlighter.transform.parent = transform.parent;
+        _highlighter.transform.localScale = new Vector3(1, 1, 1);
+        _highlighter.transform.localPosition = new Vector3(0, 0, 0);
+
+        if (hightlightPrefab)
+        {
+            for (int i = 0; i < _hlLength; i++)
+            {
+                var instance = Instantiate(hightlightPrefab, new Vector3(), Quaternion.identity, _highlighter.transform);
+                instance.transform.localPosition = _isHlVertical ? new Vector3(0, 0, i * tileSize.y) : new Vector3(i * tileSize.x, 0, 0);
+            }
+        }
+        else
+            Debug.LogError("Highlight object is not provided");
+    }
+    
+    public void OnMouseEnter()
+    {
+        InstantiateHighlighter();
+    }
+
+    public void OnMouseExit()
+    {
+        if (_highlighter) Destroy(_highlighter);
     }
 }

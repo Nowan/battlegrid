@@ -1,10 +1,12 @@
 fileFormatVersion: 2
 guid: 539142d9d2274b2489ff02d17ed8b601
-timeCreated: 1502701639
+timeCreated: 1502788916
 licenseType: Free
 MonoImporter:
   serializedVersion: 2
-  defaultReferences: []
+  defaultReferences:
+  - crateTexture: {fileID: 2800000, guid: 06833913b57a0c94a8f4b277a7f24855, type: 3}
+  - slotTexture: {fileID: 2800000, guid: 731856f2b718fb94ea00b5868cb3080c, type: 3}
   executionOrder: 0
   icon: {instanceID: 0}
   userData: 
