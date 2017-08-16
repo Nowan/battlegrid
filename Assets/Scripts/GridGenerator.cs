@@ -1,95 +1,32 @@
-﻿using System;
-using UnityEditor;
+﻿using UnityEditor;
 using UnityEngine;
 
-[ExecuteInEditMode]
-[RequireComponent(typeof(MeshFilter))]
-[RequireComponent(typeof(MeshRenderer))]
 [RequireComponent(typeof(MeshCollider))]
-public class GridGenerator : MonoBehaviour {
+public class GridGenerator : MonoBehaviour
+{
+    public Vector2 TileSize = new Vector2(1, 1);
 
-    public TextAsset dataFile;
-    public Vector2 tileSize = new Vector2(1, 1);
-    public GameObject hightlightPrefab;
-
-    private GridModel _gridData;
-    private Vector2 _gridSize;
     private int _tilesetTileResolution = 256;
 
-    private int _hlLength = 1;
-    private bool _isHlVertical = false;
-    private GameObject _highlighter;
-
-    public Vector2 GetTileAt(Vector3 point)
-    {
-        return new Vector2(Mathf.Floor(point.x / tileSize.x), Mathf.Floor(point.z / tileSize.y));
-    }
-
-    public Vector3 GetHighlighterCenter(Vector2 tile)
-    {
-        float hlen = Mathf.Floor(_hlLength * .5f);
-        float odd = _hlLength % 2 == 0 ? 0 : 1;
-
-        // Apply restrictions to row & col - prevents object going outside grid boundaries
-        float posX = _isHlVertical ? tile.x : Mathf.Min(Mathf.Max(tile.x, hlen), _gridData.Width - hlen - odd);
-        float posY = _isHlVertical ? Mathf.Min(Mathf.Max(tile.y, hlen), _gridData.Height - hlen - odd) : tile.y;
-
-        posX *= tileSize.x;
-        posY *= tileSize.y;
-
-        return new Vector3(posX, 0, posY);
-    }
-
-    public void SetHighlighter(int length, bool isVertical)
-    {
-        _hlLength = length;
-        _isHlVertical = isVertical;
-        if (_highlighter) InstantiateHighlighter(); // refresh highlighter if already displayed
-    }
-
-    public void HighlightTile(int rowIndex, int colIndex) { HighlightTile(new Vector2(colIndex, rowIndex)); }
-
-    public void HighlightTile(Vector2 tile)
-    {
-        if (_highlighter)
-        {
-            var highlighterPos = GetHighlighterCenter(tile);
-            float hlen = Mathf.Floor(_hlLength * .5f);
-
-            highlighterPos.x -= _isHlVertical ? 0 : hlen * tileSize.x;
-            highlighterPos.y = .01f;
-            highlighterPos.z -= _isHlVertical ? hlen * tileSize.y : 0;
-
-            _highlighter.transform.localPosition = highlighterPos;
-        }
-    }
-
-	private void Start () {
-        Invalidate();
-    }
+    private GridController _controller;
+    private GameObject _terrainObj;
 
     private void OnValidate()
     {
         Invalidate();
+        if(_controller && _controller.Model != null) RebuildMesh();
     }
 
-    private void Invalidate()
+    public void Invalidate()
     {
-        if (dataFile)
-        {
-            _gridData = new GridModel(dataFile.text);
-            _gridSize = new Vector2(_gridData.Width * tileSize.x, _gridData.Height * tileSize.y);
-            BuildMesh();
-        }
-        else
-        {
-            Debug.LogError("Grid data file is not assigned!");
-        }
+        _controller = GetComponent<GridController>();
+        _terrainObj = transform.Find("Terrain").gameObject;
     }
 
-    private void BuildMesh()
+    public void RebuildMesh()
     {
-        int vertNum = _gridData.Width * _gridData.Height * 4;
+        var model = _controller.Model;
+        int vertNum = model.Width * model.Height * 4;
         int triangleNum = Mathf.RoundToInt(vertNum * 0.5f);
 
         Material groundMat = (Material)AssetDatabase.LoadAssetAtPath("Assets/Materials/ground.mat", typeof(Material));
@@ -102,25 +39,25 @@ public class GridGenerator : MonoBehaviour {
         Vector3[] normals = new Vector3[vertNum];
         Vector2[] uv = new Vector2[vertNum];
 
-        for(int r = 0; r < _gridData.Height; r++)
+        for (int r = 0; r < model.Height; r++)
         {
-            for(int c = 0; c < _gridData.Width; c++)
+            for (int c = 0; c < model.Width; c++)
             {
-                int squareIndex = r * _gridData.Width + c;
+                int squareIndex = r * model.Width + c;
                 int vertIndex = squareIndex * 4;
                 int triangleIndex = squareIndex * 6;
 
                 // Set up vertexes & normals
-                vertices[vertIndex] = new Vector3(c * tileSize.x, 0, (_gridData.Height - r - 1) * tileSize.y);
-                vertices[vertIndex + 1] = new Vector3((c + 1) * tileSize.x, 0, (_gridData.Height - r - 1) * tileSize.y);
-                vertices[vertIndex + 2] = new Vector3(c * tileSize.x, 0, (_gridData.Height - r) * tileSize.y);
-                vertices[vertIndex + 3] = new Vector3((c + 1) * tileSize.x, 0, (_gridData.Height - r) * tileSize.y);
+                vertices[vertIndex] = new Vector3(c * TileSize.x, 0, (model.Height - r - 1) * TileSize.y);
+                vertices[vertIndex + 1] = new Vector3((c + 1) * TileSize.x, 0, (model.Height - r - 1) * TileSize.y);
+                vertices[vertIndex + 2] = new Vector3(c * TileSize.x, 0, (model.Height - r) * TileSize.y);
+                vertices[vertIndex + 3] = new Vector3((c + 1) * TileSize.x, 0, (model.Height - r) * TileSize.y);
 
                 for (int i = 0; i < 4; i++)
                     normals[vertIndex + i] = Vector3.up;
 
                 // Set up UV coordinates for vertexes 
-                int ti = _gridData.Layers["ground"].Tiles[r, c];
+                int ti = model.Layers["ground"].Tiles[r, c];
                 int tiX = ti % uvRowNum;
                 int tiY = uvRowNum - Mathf.FloorToInt((float)ti / uvRowNum) - 1;
 
@@ -148,44 +85,12 @@ public class GridGenerator : MonoBehaviour {
             uv = uv
         };
 
-        MeshFilter meshFilter = GetComponent<MeshFilter>();
-        MeshRenderer meshRenderer = GetComponent<MeshRenderer>();
-        MeshCollider meshCollider = GetComponent<MeshCollider>();
+        MeshFilter meshFilter = _terrainObj.GetComponent<MeshFilter>();
+        MeshRenderer meshRenderer = _terrainObj.GetComponent<MeshRenderer>();
+        MeshCollider meshCollider = _terrainObj.GetComponent<MeshCollider>();
 
         meshFilter.mesh = mesh;
         meshCollider.sharedMesh = mesh;
         meshRenderer.sharedMaterial = groundMat;
-    }
-
-    private void InstantiateHighlighter()
-    {
-        if (_highlighter) Destroy(_highlighter);
-        if (_hlLength <= 0) return;
-
-        _highlighter = new GameObject("Highlighter");
-        _highlighter.transform.parent = transform.parent;
-        _highlighter.transform.localScale = new Vector3(1, 1, 1);
-        _highlighter.transform.localPosition = new Vector3(0, 0, 0);
-
-        if (hightlightPrefab)
-        {
-            for (int i = 0; i < _hlLength; i++)
-            {
-                var instance = Instantiate(hightlightPrefab, new Vector3(), Quaternion.identity, _highlighter.transform);
-                instance.transform.localPosition = _isHlVertical ? new Vector3(0, 0, i * tileSize.y) : new Vector3(i * tileSize.x, 0, 0);
-            }
-        }
-        else
-            Debug.LogError("Highlight object is not provided");
-    }
-    
-    public void OnMouseEnter()
-    {
-        InstantiateHighlighter();
-    }
-
-    public void OnMouseExit()
-    {
-        if (_highlighter) Destroy(_highlighter);
     }
 }

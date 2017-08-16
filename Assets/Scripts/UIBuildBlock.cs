@@ -26,7 +26,7 @@ public class UIBuildBlock : MonoBehaviour
         _crateObj.transform.localPosition = new Vector3(0, 0, 0);
     }
 
-    private class CrateDrag : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
+    public class CrateDrag : MonoBehaviour, IBeginDragHandler, IEndDragHandler, IDragHandler
     {
         public UIBuildBlock parentBlock;
 

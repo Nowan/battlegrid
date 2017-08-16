@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: fda1b066ccdecae4997a26ac86317877
+timeCreated: 1502833066
+licenseType: Free
+MonoImporter:
+  serializedVersion: 2
+  defaultReferences:
+  - RegularHighlight: {fileID: 1980863786559392, guid: 1ae0886e904c5844a8b9fe347052717e,
+      type: 2}
+  - AccentHighlight: {fileID: 1766382362533316, guid: c277fee94b518c34783194c5e82a558c,
+      type: 2}
+  - BuildingHighlight: {fileID: 1944236904762068, guid: d290fac3d97305c4187199164ebca04c,
+      type: 2}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

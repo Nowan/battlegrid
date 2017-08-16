@@ -7,6 +7,7 @@ public class GridModel
     public int Width { get; private set; }
     public int Height { get; private set; }
     public Dictionary<string, LayerModel> Layers { get; private set; }
+    public BuildingsController Buildings;
 
     public GridModel(string jsonData)
     {
@@ -18,8 +19,7 @@ public class GridModel
         Layers = new Dictionary<string, LayerModel>(layersArray.Count);
         foreach(JSONNode node in layersArray) Layers[node["name"]] = new LayerModel(node);
 
-
-        //Debug.Log(jObject.ToString());
+        Buildings = new BuildingsController(Layers["buildings"]);
     }
 
     public class LayerModel
@@ -42,5 +42,37 @@ public class GridModel
                 Tiles[row, col] = tilesArray[i].AsInt - 1;
             }
         }
+    }
+
+    public class BuildingsController
+    {
+        private LayerModel _layerModel;
+
+        public BuildingsController(LayerModel buildingsLayer)
+        {
+            _layerModel = buildingsLayer;
+        }
+
+        public void Insert(Vector2 tile, int length, bool isVertical)
+        {
+            for (int i = 0; i < length; i++)
+            {
+                int row = (int)tile.y + (isVertical ? i : 0);
+                int col = (int)tile.x + (isVertical ? 0 : i);
+                _layerModel.Tiles[row, col] = 1;
+            }
+            Debug.Log(_layerModel.Tiles);
+        }
+
+        public TileInfo IsTileAvailable(Vector2 tile)
+        {
+
+            return null;
+        }
+    }
+
+    public class TileInfo
+    {
+
     }
 }

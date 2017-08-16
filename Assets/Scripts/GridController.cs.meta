@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 86335799372d78a4a946e765cfd3cb0b
+timeCreated: 1502816049
+licenseType: Free
+MonoImporter:
+  serializedVersion: 2
+  defaultReferences:
+  - DataFile: {fileID: 4900000, guid: 8f9fc33768c6e464bae0f9ee9c144e7a, type: 3}
+  - HightlightPrefab: {fileID: 1980863786559392, guid: 1ae0886e904c5844a8b9fe347052717e,
+      type: 2}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
